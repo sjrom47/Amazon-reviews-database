@@ -43,7 +43,7 @@ A Python application is developed to access and visualize the data stored in the
 Using plotly we are able to visualize the data while imposing different filters. This allows a greater control and simplifies the data analysis tasks
 
 <div align="center">
-    <img src="/images/dashbard.png" alt="dashboard" width="60%" height="50%">
+    <img src="/images/dashboard.png" alt="dashboard" width="60%" height="50%">
 </div>
 
 ### Python Application with Neo4j Integration 🎨
