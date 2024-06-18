@@ -20,6 +20,8 @@ This project involves the design, implementation, and management of a database, 
 
 For this project we have created several databse and visualization systems around the amazon review dataset, found [here](https://cseweb.ucsd.edu/~jmcauley/datasets/amazon/links.html)
 
+For the project to work, you will have to first load the files into SQL and MongoDB, as the dashboard and neo4J rely on queries to SQL and MongoDB. 
+
 ## Libraries and dependencies 📚
 
 > We used python 3.11.5 for the development of this project, so check the compatibility of the required libraries with your python version.
