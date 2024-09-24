@@ -43,7 +43,7 @@ A Python application is developed to access and visualize the data stored in the
 Using plotly we are able to visualize the data while imposing different filters. This allows a greater control and simplifies the data analysis tasks
 
 <div align="center">
-    <img src="/images/dashboard.png" alt="dashboard" width="60%" height="50%">
+    <img src="/assets/dashboard.png" alt="dashboard" width="60%" height="50%">
 </div>
 
 ### Python Application with Neo4j Integration 🎨
@@ -57,7 +57,7 @@ The integration with Neo4j allows for advanced graph-based analysis of the data.
 
 Here is an example use case of our neo4j implementation to calculate similarities between reviewers
 <div align="center">
-    <img src="/images/neo4j.png" alt="neo4j" width="50%" height="50%">
+    <img src="/assets/neo4j.png" alt="neo4j" width="50%" height="50%">
 </div>
 
 ## Developers 🔧

@@ -1,31 +1,31 @@
 """
 ================
-configuracion.py
+config.py
 ================
 
-Desarrollado por Sergio Jiménez Romero y Alberto Velasco Rodríguez
+Developed by Sergio Jiménez Romero and Alberto Velasco Rodríguez
 
-En este fichero estan los parametros para ejecutar los distintos programas del proyecto
+This file contains the parameters to run the different programs of the project
 """
 
-# Ruta a los datos
-DIRECTORIO_DATOS = "datos"
+# Path to the data
+DIRECTORIO_DATOS = "data"
 NOMBRE_FICHEROS_DATOS = [
     "Digital_Music_5.json",
     "Musical_Instruments_5.json",
     "Toys_and_Games_5.json",
     "Video_Games_5.json",
-] # se usan en load_data.py
-NOMBRE_FICHEROS_EXTRA = "Amazon_Instant_Video_5.json" # este es el que se usa en inserta_dataset.py
+]  # used in load_data.py
+NOMBRE_FICHEROS_EXTRA = "Amazon_Instant_Video_5.json"  # used in inserta_dataset.py
 
 
-# Credenciales necesarias
+# Required credentials
 USUARIO_SQL = "alfaduck"
 PASSWORD_SQL = "omegaduck"
 USUARIO_NEO = "neo4j"
 PASSWORD_NEO = "omegaduck"
 
-# Nombre de las bases de datos y colecciones
+# Database and collection names
 # SQL
 NOMBRE_BASE_SQL = "reviews_product_SQL"
 GUIAS_TABLAS_SQL = {
@@ -47,10 +47,10 @@ NOMBRE_BASE_MONGODB = "reviews_product_Mongo"
 NOMBRE_TABLA_MONGODB = "review"
 GUIA_TABLA_MONGODB = ["id", "reviewText", "summary", "helpful"]
 
-# URI Neo4J
+# Neo4J URI
 URI = "neo4j://localhost:7687"
 
-# Datos Neo4j
+# Neo4j Data
 N_USUARIOS_NEO = 30
 EJERCICIO = 3
 CAT_EJERCICIO_2 = "Video_Games_5"

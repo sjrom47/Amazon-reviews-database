@@ -1,22 +1,18 @@
 """
 =====================
-menu_visualizacion.py
+dashboard.py
 =====================
 
-Desarrollado por Sergio Jiménez Romero y Alberto Velasco Rodríguez
+Developed by Sergio Jiménez Romero and Alberto Velasco Rodríguez
 
-Este fichero crea un dashboard en el que hay graficos sobre los datos de 
-las reviews de amazon. Es necesario ejecutar load_data.py antes de poder ejecutar
-este.
+This file creates a dashboard with graphs about Amazon review data. It is necessary to run load_data.py before running this.
 
-En cuanto a los parametros de configuracion, solo es necesario asegurarse de que las 
-credenciales de SQL y mongoDB sean correctas
+Regarding the configuration parameters, it is only necessary to ensure that the SQL and MongoDB credentials are correct.
 """
 
 import dash
 
 from dash import html, dcc, dash_table
-
 
 from dash.dependencies import Input, Output
 import pandas as pd
@@ -28,92 +24,92 @@ import pymysql
 from pymongo import MongoClient, InsertOne, UpdateOne, ReplaceOne
 import json
 import os
-import configuracion as c
+import config as c
 from wordcloud import WordCloud
 import pandas as pd
 
 
 def get_client() -> MongoClient:
     """
-    Funcion para obtener una conexion del cliente
+    Function to get a client connection
     """
-    # Indicamos la cadena de conexion (en este caso, localhost)
+    # Indicate the connection string (in this case, localhost)
     CONNECTION_STRING = "mongodb://localhost:27017"
-    # creamos la conexion empleando mongoClient
+    # create the connection using mongoClient
     return MongoClient(CONNECTION_STRING)
 
 
 def get_database(database: str):
     """
-    Funcion para obtener la base de datos de MongoDB
+    Function to get the MongoDB database
 
     Args:
-        database (str): el nombre de la base de datos
+        database (str): the name of the database
 
     Returns:
-        database: conexion de la base de datos
+        database: database connection
     """
     client = get_client()
     databases = client.list_database_names()
     if database not in databases:
-        raise Exception("No existe la base de datos")
+        raise Exception("The database does not exist")
 
-    # devolvemos la conexion de la bbdd
+    # return the database connection
     return client[database]
 
 
 def sql_queries(sql, data=None):
     """
-    Funcion para automatizar las queries de SQL al servidor
+    Function to automate SQL queries to the server
 
     Args:
-        sql (str): la query de SQL
-        data (list, optional): datos si le queremos pasar parametros a la query de SQL. Defaults to None.
+        sql (str): the SQL query
+        data (list, optional): data if we want to pass parameters to the SQL query. Defaults to None.
 
     Returns:
-        list: lista de tuplas que contienen los resultados para cada uno de los parametros pedidos
+        list: list of tuples containing the results for each of the requested parameters
     """
-    conexion_mysql = pymysql.connect(
+    mysql_connection = pymysql.connect(
         host="localhost",
         user=c.USUARIO_SQL,
         password=c.PASSWORD_SQL,
-        database=c.NOMBRE_BASE_SQL,  # Tu usuario
+        database=c.NOMBRE_BASE_SQL,  # Your user
     )
-    with conexion_mysql:
-        cursor = conexion_mysql.cursor()
+    with mysql_connection:
+        cursor = mysql_connection.cursor()
         if data:
-            # Si tiene parametros los sustituimos en la query
+            # If it has parameters, we substitute them in the query
             cursor.execute(sql, data)
         else:
             cursor.execute(sql)
-        datos = cursor.fetchall()
-        # Pasamos los datos de filas a columnas para poder operar mejor sobre ellos
-        datos = list(zip(*datos))
-    return datos
+        data = cursor.fetchall()
+        # Transform the data from rows to columns to better operate on them
+        data = list(zip(*data))
+    return data
 
 
-# Conexion a SQL
-conexion_mysql = pymysql.connect(
+# SQL connection
+mysql_connection = pymysql.connect(
     host="localhost",
     user=c.USUARIO_SQL,
     password=c.PASSWORD_SQL,
-    database=c.NOMBRE_BASE_SQL,  # Tu usuario
+    database=c.NOMBRE_BASE_SQL,  # Your user
 )
-# Conexion a mongo
+# Mongo connection
 dbname = get_database(c.NOMBRE_BASE_MONGODB)
 collection = dbname[c.NOMBRE_TABLA_MONGODB]
-# Hacemos algunas queries antes para sacar las categorias y los numeros de los productos
-with conexion_mysql:
-    cursor = conexion_mysql.cursor()
+# We do some queries beforehand to get the categories and product numbers
+with mysql_connection:
+    cursor = mysql_connection.cursor()
     sql = """SELECT DISTINCT(type)
                 FROM product"""
     cursor.execute(sql)
-    tipos_producto = [i[0] for i in cursor.fetchall()]
+    product_types = [i[0] for i in cursor.fetchall()]
     sql = """SELECT DISTINCT(asin)
                 FROM product"""
     cursor.execute(sql)
-    nums_articulos = [i[0] for i in cursor.fetchall()]
-# Estilos del dashboard
+    product_numbers = [i[0] for i in cursor.fetchall()]
+# Dashboard styles
 tabs_styles = {"height": "44px"}
 tab_style = {
     "borderBottom": "1px solid #d6d6d6",
@@ -128,9 +124,9 @@ tab_selected_style = {
     "color": "white",
     "padding": "6px",
 }
-# Query para sacar el numero de usuarios en el grafico sin callback
-# La hacemos antes porque el grafico no se actualiza
-query_usuarios = """SELECT COUNT(*), num_rev
+# Query to get the number of users in the graph without callback
+# We do it beforehand because the graph does not update
+query_users = """SELECT COUNT(*), num_rev
                     FROM (SELECT reviewerID, COUNT(*) AS num_rev
                         FROM review
                         GROUP BY reviewerID) AS conteo
@@ -138,14 +134,14 @@ query_usuarios = """SELECT COUNT(*), num_rev
                     ORDER BY num_rev
 
 """
-usuarios, n_reviews = sql_queries(query_usuarios)
-# Transformacion para que el histograma no agrupe varias cantidades en una sola bin
-usuarios = [
-    usuarios[n_reviews.index(i)] if i in n_reviews else 0
+users, n_reviews = sql_queries(query_users)
+# Transformation so that the histogram does not group several quantities into a single bin
+users = [
+    users[n_reviews.index(i)] if i in n_reviews else 0
     for i in range(max(n_reviews) + 1)
 ]
 n_reviews = list(range(max(n_reviews) + 1))
-# Estilo de los graficos
+# Graph styles
 graph_style = {
     "width": "45%",
     "height": "60vh",
@@ -157,30 +153,28 @@ graph_style = {
 app = Dash(__name__)
 
 # Step 2. Set the title
-app.title = "Menu visualizacion reviews Amazon"
+app.title = "Amazon Reviews Visualization Menu"
 
 # Step 3. Set the layout
 
 app.layout = html.Div(
     [
-        # Titulo
+        # Title
         html.H1(
-            "Menu visualizacion reviews Amazon",
+            "Amazon Reviews Visualization Menu",
             style={"text-align": "center", "font_family": "sans-serif"},
         ),
-        # Contenido
-        # Cada div corresponde a un grafico y su dropdown. Hay que hacerlo asi porque si no los
-        # dropdowns ocupan todo el ancho de la pagina
+        # Content
+        # Each div corresponds to a graph and its dropdown. It has to be done this way because otherwise the
+        # dropdowns occupy the entire width of the page
         html.Div(
             [
                 dcc.Dropdown(
                     id="dropdown-1",  ## dropdown menu
-                    options=[
-                        {"label": i, "value": i} for i in ["Todo"] + tipos_producto
-                    ],
-                    value="Todo",
+                    options=[{"label": i, "value": i} for i in ["All"] + product_types],
+                    value="All",
                 ),  ## selected state
-                dcc.Graph(id="graph-1"),  # Reviews por año
+                dcc.Graph(id="graph-1"),  # Reviews per year
             ],
             style=graph_style,
         ),
@@ -188,12 +182,10 @@ app.layout = html.Div(
             [
                 dcc.Dropdown(
                     id="dropdown-2",  ## dropdown menu
-                    options=[
-                        {"label": i, "value": i} for i in ["Todo"] + tipos_producto
-                    ],
-                    value="Todo",
+                    options=[{"label": i, "value": i} for i in ["All"] + product_types],
+                    value="All",
                 ),  ## selected state
-                dcc.Graph(id="graph-2"),  # Evolucion de popularidad
+                dcc.Graph(id="graph-2"),  # Popularity evolution
             ],
             style=graph_style,
         ),
@@ -203,11 +195,11 @@ app.layout = html.Div(
                     id="dropdown-3",  ## dropdown menu
                     options=[
                         {"label": i, "value": i}
-                        for i in ["Todo"] + tipos_producto + nums_articulos
+                        for i in ["All"] + product_types + product_numbers
                     ],
-                    value="Todo",
+                    value="All",
                 ),  ## selected state
-                dcc.Graph(id="graph-3"),  # Reviews por nota
+                dcc.Graph(id="graph-3"),  # Reviews by rating
             ],
             style=graph_style,
         ),
@@ -215,25 +207,23 @@ app.layout = html.Div(
             [
                 dcc.Dropdown(
                     id="dropdown-4",  ## dropdown menu
-                    options=[
-                        {"label": i, "value": i} for i in ["Todo"] + tipos_producto
-                    ],
-                    value="Todo",
+                    options=[{"label": i, "value": i} for i in ["All"] + product_types],
+                    value="All",
                 ),  ## selected state
-                dcc.Graph(id="graph-4"),  # Evolucion de las reviews
+                dcc.Graph(id="graph-4"),  # Reviews evolution
             ],
             style=graph_style,
         ),
-        # Este grafico no tiene un dropdown ni un callback, no se actualiza
+        # This graph does not have a dropdown or a callback, it does not update
         html.Div(
             dcc.Graph(
                 figure=px.histogram(
                     x=n_reviews,
-                    y=usuarios,
-                    title="Reviews por usuario",
-                    nbins=len(usuarios),
+                    y=users,
+                    title="Reviews per user",
+                    nbins=len(users),
                 ),
-                id="graph-5",  # Reviews por usuario
+                id="graph-5",  # Reviews per user
             ),
             style=graph_style,
         ),
@@ -241,8 +231,8 @@ app.layout = html.Div(
             [
                 dcc.Dropdown(
                     id="dropdown-6",  ## dropdown menu
-                    options=[{"label": i, "value": i} for i in tipos_producto],
-                    value=tipos_producto[0],
+                    options=[{"label": i, "value": i} for i in product_types],
+                    value=product_types[0],
                 ),  ## selected state
                 dcc.Graph(id="graph-6"),  # Wordcloud
             ],
@@ -252,12 +242,10 @@ app.layout = html.Div(
             [
                 dcc.Dropdown(
                     id="dropdown-7",  ## dropdown menu
-                    options=[
-                        {"label": i, "value": i} for i in ["Todo"] + tipos_producto
-                    ],
-                    value="Todo",
+                    options=[{"label": i, "value": i} for i in ["All"] + product_types],
+                    value="All",
                 ),  ## selected state
-                dcc.Graph(id="graph-7"),  # Evolucion de las medias
+                dcc.Graph(id="graph-7"),  # Average evolution
             ],
             style=graph_style,
         ),  ## selected state
@@ -265,26 +253,26 @@ app.layout = html.Div(
 )
 
 
-# Step3. Set the callback functions
+# Step 3. Set the callback functions
 """
-En todas las funciones de callback en cuyo grafico se pueda seleccionar Todo, este inmediatamente
-va a ser sustituido por una lista con todas las categorias, que son halladas por una query antes de
-que se lance el dashboard 
+In all callback functions where the graph can select All, this will immediately
+be replaced by a list with all categories, which are found by a query before
+the dashboard is launched
 """
 
 
-# En estos decoradores se especifica cual es el input y el output de
-# cada funcion de callback
+# In these decorators, the input and output of
+# each callback function are specified
 @app.callback(
     Output(component_id="graph-1", component_property="figure"),
     Input(component_id="dropdown-1", component_property="value"),
 )
 def update_graph(selected_category):
     """
-    Actualiza el grafico 1 en funcion de la categoria elegida
+    Updates graph 1 based on the selected category
     """
-    if selected_category == "Todo":
-        selected_category = tipos_producto
+    if selected_category == "All":
+        selected_category = product_types
     else:
         selected_category = [selected_category]
 
@@ -297,7 +285,7 @@ def update_graph(selected_category):
     bar_fig = px.bar(
         x=x,
         y=y,
-        title="Reviews por año de todos los productos",
+        title="Reviews per year of all products",
     )
     return bar_fig
 
@@ -308,10 +296,10 @@ def update_graph(selected_category):
 )
 def update_graph(selected_category):
     """
-    Actauliza el grafico 2 en funcion de la categoria elegida
+    Updates graph 2 based on the selected category
     """
-    if selected_category == "Todo":
-        selected_category = tipos_producto
+    if selected_category == "All":
+        selected_category = product_types
     else:
         selected_category = [selected_category]
 
@@ -327,7 +315,7 @@ def update_graph(selected_category):
     line_fig = px.line(
         x=x,
         y=y,
-        title="Evolucion de popularidad de todos los productos",
+        title="Popularity evolution of all products",
     )
     return line_fig
 
@@ -338,14 +326,14 @@ def update_graph(selected_category):
 )
 def update_graph(selected_category):
     """
-    Actualiza el grafico 3 en funcion de la categoria elegida
+    Updates graph 3 based on the selected category
     """
-    if selected_category == "Todo":
-        selected_category = tipos_producto
+    if selected_category == "All":
+        selected_category = product_types
     else:
         selected_category = [selected_category]
 
-    # Como no sabemos si lo que nos llega es un asin o una categoria, probamos a buscar ambos
+    # Since we don't know if what we receive is an asin or a category, we try to search for both
     sql = """SELECT overall, COUNT(*)
                 FROM review
                 WHERE type in %s OR asin in %s
@@ -357,7 +345,7 @@ def update_graph(selected_category):
     bar_fig = px.bar(
         x=x,
         y=y,
-        title="Reviews por nota de todos los productos",
+        title="Reviews by rating of all products",
     )
     return bar_fig
 
@@ -368,10 +356,10 @@ def update_graph(selected_category):
 )
 def update_graph(selected_category):
     """
-    Actualiza el grafico 4 en funcion de la categoria seleccionada
+    Updates graph 4 based on the selected category
     """
-    if selected_category == "Todo":
-        selected_category = tipos_producto
+    if selected_category == "All":
+        selected_category = product_types
     else:
         selected_category = [selected_category]
 
@@ -387,7 +375,7 @@ def update_graph(selected_category):
     line_fig = px.line(
         x=x,
         y=y,
-        title="Evolucion de las review a lo largo del tiempo de todos los productos",
+        title="Review evolution over time of all products",
     )
     return line_fig
 
@@ -398,7 +386,7 @@ def update_graph(selected_category):
 )
 def update_graph(selected_category):
     """
-    Actualiza el grafico 6 en funcion de la categoria seleccionada
+    Updates graph 6 based on the selected category
     """
 
     sql = """SELECT id
@@ -413,8 +401,7 @@ def update_graph(selected_category):
     )
     word_cloud = WordCloud(background_color="white").generate(wordcloud_text)
 
-    # Para poder mostrarla en plotly, es necesario convertir la wordcloud a imagen y exportarla de
-    # esta manera
+    # To display it in plotly, it is necessary to convert the wordcloud to an image and export it this way
     word_cloud = px.imshow(word_cloud.to_array())
     word_cloud.update_layout(
         xaxis={"visible": False},
@@ -433,10 +420,10 @@ def update_graph(selected_category):
 )
 def update_graph(selected_category):
     """
-    Actualiza el grafico 7 en funcion de la categoria elegida
+    Updates graph 7 based on the selected category
     """
-    if selected_category == "Todo":
-        selected_category = tipos_producto
+    if selected_category == "All":
+        selected_category = product_types
     else:
         selected_category = [selected_category]
 
@@ -448,15 +435,15 @@ def update_graph(selected_category):
         """
     types, year, overall = sql_queries(sql, [selected_category])
     df = pd.DataFrame([types, year, overall]).transpose()
-    df.columns = ["tipo", "año", "media_overall"]
-    selected_df = df[df["tipo"].isin(selected_category)]
+    df.columns = ["type", "year", "average_overall"]
+    selected_df = df[df["type"].isin(selected_category)]
 
     line_fig = px.line(
         selected_df,
-        x="año",
-        y="media_overall",
-        color="tipo",
-        title="Evolucion de las medias de las reviews",
+        x="year",
+        y="average_overall",
+        color="type",
+        title="Average review evolution",
     )
     return line_fig
 
